@@ -73,17 +73,17 @@ def parse_arguments(program):
              "parameter value separated by space.")
     args = parser.parse_args()
 
-    params = args.parameters
-    parameters = dict(zip(params[::2], params[1::2]))
+    params = args.parameters.copy()
+    args.parameters = dict(zip(params[::2], params[1::2]))
 
-    return args.action, parameters
+    return args
 
 
 @exitcode
 def ec2_main():
     """Main function for EC2 API Client."""
 
-    action, args = parse_arguments("c2-ec2")
+    args = parse_arguments("c2-ec2")
 
     configure_boto()
     ec2_endpoint = os.environ.get("EC2_URL")
@@ -91,7 +91,7 @@ def ec2_main():
         raise EnvironmentVariableError("EC2_URL")
 
     connection = get_connection("ec2", ec2_endpoint)
-    response = connection.make_request(action, args)
+    response = connection.make_request(args.action, args.parameters)
 
     print(prettify_xml(response.read()))
 
@@ -100,7 +100,7 @@ def ec2_main():
 def cw_main():
     """Main function for CloudWatch API Client."""
 
-    action, args = parse_arguments("c2-cw")
+    args = parse_arguments("c2-cw")
 
     configure_boto()
     cloudwatch_endpoint = os.environ.get("AWS_CLOUDWATCH_URL")
@@ -108,7 +108,7 @@ def cw_main():
         raise EnvironmentVariableError("AWS_CLOUDWATCH_URL")
 
     connection = get_connection("cw", cloudwatch_endpoint)
-    response = connection.make_request(action, args)
+    response = connection.make_request(args.action, args.parameters)
 
     print(prettify_xml(response.read()))
 
@@ -117,7 +117,7 @@ def cw_main():
 def ct_main():
     """Main function for CloudTrail API Client."""
 
-    action, args = parse_arguments("c2-ct")
+    args = parse_arguments("c2-ct")
 
     configure_boto()
     cloudtrail_endpoint = os.environ.get("AWS_CLOUDTRAIL_URL")
@@ -132,6 +132,8 @@ def ct_main():
     if "EndTime" in args:
         args["EndTime"] = int(args["EndTime"])
 
-    response = connection.make_request(action, json.dumps(from_dot_notation(args)))
+    response = connection.make_request(
+        args.action, json.dumps(from_dot_notation(args.parameters))
+    )
 
     print(json.dumps(response, indent=4, sort_keys=True))
