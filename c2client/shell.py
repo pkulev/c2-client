@@ -66,6 +66,8 @@ def parse_arguments(program):
     """
 
     parser = argparse.ArgumentParser(prog=program)
+    parser.add_argument("-v", "--version",
+                        help="API Version for service. (for example 2016-11-15)")
     parser.add_argument("action", help="The action that you want to perform.")
     parser.add_argument("parameters", nargs="*",
         help="Any parameters for the action. "
@@ -91,6 +93,9 @@ def ec2_main():
         raise EnvironmentVariableError("EC2_URL")
 
     connection = get_connection("ec2", ec2_endpoint)
+    if args.version is not None:
+        connection.APIVersion = args.version
+
     response = connection.make_request(args.action, args.parameters)
 
     print(prettify_xml(response.read()))
@@ -125,6 +130,9 @@ def ct_main():
         raise EnvironmentVariableError("AWS_CLOUDTRAIL_URL")
 
     connection = get_connection("ct", cloudtrail_endpoint)
+    if args.version is not None:
+        connection.APIVersion = args.version
+
     if "MaxResults" in args:
         args["MaxResults"] = int(args["MaxResults"])
     if "StartTime" in args:
